@@ -1,38 +1,20 @@
-// import os from 'os'
-// import system from 'electron'
 import {ipcRenderer} from 'electron'
 import path from 'path'
 import fs from 'fs'
-// import MyProgress from "../renderer/components/MyProgress";
 
-/*
-const readFiles = function (filepath) {
-  var _path = path.join(filepath)
-  console.log(_path)
-  if(fs.existsSync(filepath)) {
-  fs.readFile(_path, 'utf8', function (err, data) {
-    if (err) {
-      return console.log(err)
-    }
-    console.log(data)
-  })
-  }
-}
- */
+var counter = 0
 
 const readDir = function (that, dirPath) {
   var directoryPath = path.join('', dirPath)
 
   return fs.readdir(directoryPath, function (err, files) {
-    // handling error
+    // Handle error
     if (err) {
       return console.log('Unable to read directory: ' + err)
     }
 
-    // listing all files using forEach
+    // Listing all files using forEach
     files.forEach(function (file) {
-      // Do whatever you want to do with the file
-      // console.log(file)
     })
 
     if (that.selectType === 'dir') {
@@ -100,22 +82,12 @@ const clickConfirm = function () {
       for (var i = 0; i < fileMaxNumber; i++) {
         var sourceFile = beforeChangeFiles[i]
         var destFile = afterChangeFiles[i]
-        if (fileMaxNumber === 1) {
-          changeCallback(this, sourceFile, destFile, 100, res => {
-            console.log(res)
-          })
-        } else {
-          // var ratio = parseInt((i / fileMaxNumber) * 100)
-          var ratio = toInt((i / fileMaxNumber) * 100)
-          changeCallback(this, sourceFile, destFile, ratio, res => {
-            console.log(res)
-            // this.$refs.Alert.$refs.MyProgress.progress = ratio
-          })
-        }
+        var ratio = toInt(((i + 1) / fileMaxNumber) * 100)
+        changeCallback(this, sourceFile, destFile, ratio, res => {
+          console.log(res)
+        })
       }
-      // showMessage(this, '文件已经修改完毕.')
     } catch (err) {
-      // showProgress(this, false)
       showMessage(this, '文件修改失败：', err)
     }
   }
@@ -171,25 +143,19 @@ const getPath = function (e, path) {
 
   switch (this.selectType) {
     case 'dir':
-      // showProgress(this, true)
-      // this.outPath = path
       this.$data.sourceDir = ''
       this.$data.fileList = []
       this.filepath = path
       getDirName(this, this.selectType, this.filepath)
-      // showProgress(this, true)
       readDir(this, this.sourceDir)
       break
 
     case 'file':
-      // showProgress(this, false)
       this.$data.sourceDir = ''
       this.$data.fileList = []
       this.filepath = path
       if (this.filepath) {
-        // this.fileList = this.filepath
         getDirName(this, this.selectType, this.filepath)
-        // readFiles(this.filepath)
       }
       break
 
@@ -216,45 +182,25 @@ const showMessage = function (that, msg) {
     return false
   }
 
-  // showProgress(this, false)
   return false
 }
 
 const getDirName = function (that, selectType, name) {
-  // var sourceObject = {}
-
   if (selectType === 'file') {
     var nameArray = name.split('\\')
-    // var sourcePath = '原文件目录： ' + name
     var sourcePath = nameArray.pop()
     that.outPath = nameArray.join('\\')
     that.sourceDir = '源文件目录： ' + that.outPath
     that.fileList.push(sourcePath)
-    // sourceObject = {'dir': sourceDir, 'file': sourcePath}
   }
 
   if (selectType === 'dir') {
     that.sourceDir = name
     that.outPath = name
-    // that.fileList = res
-    // console.log(res)
-    // sourceObject = {'dir': name, 'file': res}
   }
-
-  // return sourceObject
 }
 
 const makeDir = function (that, dirname) {
-  /*
-  if (that.firstInput === '' || that.lastInput === '') {
-    return showMessage(that, '')
-  }
-
-  if ((that.sourceDir === '') || (Array.prototype.isPrototypeOf(that.fileList) && that.fileList.length === 0)) {
-    return showMessage(that, '请选择源文件或文件夹')
-  }
-  */
-
   if (!fs.existsSync(dirname)) {
     return fs.mkdirSync(dirname)
   }
@@ -263,7 +209,6 @@ const makeDir = function (that, dirname) {
 }
 
 const showProgress = function (that, show) {
-  // that.$refs.MyProgress.show = show
   that.$refs.Confirm.showProgress = show
   return show
 }
@@ -280,63 +225,24 @@ const clickDanger = function () {
 
 const changeCallback = function (that, sourceFile, destFile, progress) {
   return fs.copyFile(sourceFile, destFile, function (err) {
-    // handling error
+    if (counter !== 100) {
+      counter = progress
+    }
     if (err) {
-      // return console.log('Unable to read directory: ' + err)
       return showMessage(this, '文件修改失败.')
     }
-    if (progress > (100 - 40)) {
+    if (counter === 100) {
       that.$refs.Alert.$refs.MyProgress.progress = 100
     } else {
       that.$refs.Alert.$refs.MyProgress.progress = progress
     }
     return true
   })
-  // showMessage(this, '文件已经修改完毕.')
 }
 
 const toInt = function (val) {
   return val > 0 ? Math.floor(val) : Math.ceil(val)
 }
-
-/*
-const clickConfirm = function () {
-  console.log('点击了confirm')
-}
- */
-
-/*
-const selectFiles = function () {
-  const fileManagerBtn = document.getElementById('open-file-directory')
-
-  fileManagerBtn.addEventListener('click', function (event) {
-    system.shell.showItemInFolder(os.homedir())
-  })
-}
- */
-
-/*
-const selectFiles = function () {
-  var vm = this
-  var ipc = ipcRenderer
-
-  return Object.assign({},
-    this.$listeners,
-    {
-      click: function (event) {
-        if (vm.dir !== 'file') {
-          ipc.send('open-file-directory', 'openDirectory')
-        } else {
-          ipc.send('open-file-directory', 'openFile')
-        }
-        ipc.once('selectedItem', function (event, path) {
-          console.log(path)
-        })
-      }
-    }
-  )
-}
- */
 
 export {
   selectFile,
@@ -355,6 +261,4 @@ export {
   clickDanger,
   changeCallback,
   toInt
-  // toChange,
-  // readFiles
 }
